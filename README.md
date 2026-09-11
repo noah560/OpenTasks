@@ -5,27 +5,19 @@ and send push notifications.
 ## Encryption
 OpenTasks is designed to be easy to write
 custom clients for. That way, you can make
-it work on just about any device.
+it work on just about any device. The key
+is a 256 bit value that is different for
+each user.
 
-Encryption Algorithm:
- 1. Add an 8 byte unix timestamp to the end
-    of the plaintext.
- 2. Add a 1 byte checksum to the end of the
-    plaintext, so all bytes add to 0, to
-    detect both tampering and transmission
-    errors.
- 3. Calculate the nonce as the last 96 bits
-    (12 bytes) of the SHA-256 hash of the
-    plaintext (including everything added).
- 4. Encrypt using the nonce and add the nonce
-    to the end of the ciphertext.
-
-Decryption Algorithm:
- 1. Extract the nonce from the end of the
-    ciphertext.
- 2. Decrypt the message.
- 3. Validate the checksum.
- 4. Remove the checksum and timestamp.
+Encryption is done using the
+XChaCha20-Poly1305 algorithm. The associated
+data consists of a little-endian 64-bit unix
+timestamp that is verified upon being recieved
+to be in the last 5 minutes and not repeated,
+and the username.
+The 24-byte nonce is randomly chosen and is
+appended to the end of the ciphertext (after
+the authentication tag).
 
 ## Requests
 The OpenTasks protocol is based on a
@@ -33,13 +25,14 @@ request-response structure and operates over
 TCP. The following list shows the steps in
 communication:
  1. Client connects to server (default port 5324)
- 2. Client sends 16-bit request size in network
+ 2. Client sends 8-bit protocol version 1.
+ 3. Client sends 16-bit request size in network
     byte order.
- 3. Client sends the request.
- 4. Server sends 16-bit response size in network
+ 4. Client sends the request.
+ 5. Server sends 16-bit response size in network
     byte order.
- 5. Server sends the response.
- 6. Server closes the connection after the response
+ 6. Server sends the response.
+ 7. Server closes the connection after the response
     has been read.
 
 ## Request Types
