@@ -19,6 +19,17 @@ The 24-byte nonce is randomly chosen and is
 appended to the end of the ciphertext (after
 the authentication tag).
 
+Data is also optionally end-to-end encrypted
+using the same XChaCha20-Poly1305 algorithm.
+If the client uses a password to derive the
+key, the algorithm used will be PBKDF2-SHA256.
+This choice is per the client implementation,
+and not required. There is no tag for indication
+of end-to-end encryption, as it is a purely
+client side choice. The only reason this
+document lists what algorithms to use is so
+clients can be easily compatible.
+
 ## Requests
 The OpenTasks protocol is based on a
 request-response structure and operates over
