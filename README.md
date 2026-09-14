@@ -59,8 +59,8 @@ What follows is a list of types of requests:
  1 day old.
 
 |number|     explanation    |request data             |response data
-|-----:|:------------------:|:------------------------|:-------------------------
-|     0|read upcoming events|username                 |timestamp,
+|-----:|:------------------:|:------------------------|:----------------------------
+|     0|read upcoming events|username,days            |timestamp,
 |      |                    |                         |name,timestamp,name,etc.
 |     1|read to-do list     |username                 |name,done (true/false),
 |      |                    |                         |repeat,etc.
@@ -71,4 +71,6 @@ What follows is a list of types of requests:
 |     6|remove event        |username,timestamp,name  |no data
 |     7|trigger notification|username,important(bool),|no data
 |      |                    |name                     |
-|     8|recieve notification|device name              |list of timestamp,name
+|     8|recieve notification|device name              |list of timestamp(as string),
+|      |                    |                         |name
+|     9|read all events     |username                 |timestamp,name,repeat,etc
