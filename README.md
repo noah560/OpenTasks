@@ -57,6 +57,9 @@ What follows is a list of types of requests:
  - Note: The server discards notifications
  once they both have been read and are at least
  1 day old.
+ -  Note: Notifications are marked as important
+ by having "[IMPORTANT] " (including the space)
+ at the start
 
 |number|     explanation    |request data             |response data
 |-----:|:------------------:|:------------------------|:----------------------------
@@ -64,13 +67,12 @@ What follows is a list of types of requests:
 |      |                    |                         |name,timestamp,name,etc.
 |     1|read to-do list     |username                 |name,done (true/false),
 |      |                    |                         |repeat,etc.
-|     2|write to-do list    |username,index,done      |no data
+|     2|modify to-do itom   |username,index,done      |no data
 |     3|add to-do item      |username,index,name      |no data
 |     4|remove to-do item   |username,index           |no data
 |     5|add event           |username,timestamp,name  |no data
 |     6|remove event        |username,timestamp,name  |no data
-|     7|trigger notification|username,important(bool),|no data
-|      |                    |name                     |
+|     7|trigger notification|username,name            |no data
 |     8|recieve notification|device name              |list of timestamp(as string),
 |      |                    |                         |name
 |     9|read all events     |username                 |timestamp,name,repeat,etc
