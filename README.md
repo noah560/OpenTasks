@@ -15,14 +15,16 @@ data consists of a little-endian 64-bit unix
 timestamp that is verified upon being recieved
 to be in the last 5 minutes and not repeated,
 and the username. AAD is put at the start of the
-message. The 24-byte nonce is randomly chosen
-and is appended to the end of the ciphertext
-(after the authentication tag). The order of
-data goes:
- - 1: AAD
- - 2: Ciphertext
- - 3: Authentication Tag
- - 4: Nonce
+message, with the length (16-bit network order)
+at the beginning of it. The 24-byte nonce
+is randomly chosen and is appended to the end
+of the ciphertext (after the authentication tag).
+The order of data goes:
+ - 1: AAD length (16 bit network order)
+ - 2: AAD data (not including length)
+ - 3: Ciphertext
+ - 4: Authentication Tag
+ - 5: Nonce
 
 Data is also optionally end-to-end encrypted
 using the same XChaCha20-Poly1305 algorithm.
