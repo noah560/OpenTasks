@@ -14,15 +14,21 @@ XChaCha20-Poly1305 algorithm. The associated
 data consists of a little-endian 64-bit unix
 timestamp that is verified upon being recieved
 to be in the last 5 minutes and not repeated,
-and the username.
-The 24-byte nonce is randomly chosen and is
-appended to the end of the ciphertext (after
-the authentication tag).
+and the username. AAD is put at the start of the
+message. The 24-byte nonce is randomly chosen
+and is appended to the end of the ciphertext
+(after the authentication tag). The order of
+data goes:
+ - 1: AAD
+ - 2: Ciphertext
+ - 3: Authentication Tag
+ - 4: Nonce
 
 Data is also optionally end-to-end encrypted
 using the same XChaCha20-Poly1305 algorithm.
 If the client uses a password to derive the
-key, the algorithm used will be PBKDF2-SHA256.
+key, the algorithm used will be PBKDF2-SHA256
+with base64 encoding.
 This choice is per the client implementation,
 and not required. There is no tag for indication
 of end-to-end encryption, as it is a purely
