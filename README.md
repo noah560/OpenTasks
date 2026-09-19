@@ -72,16 +72,16 @@ What follows is a list of types of requests:
 
 |number|     explanation    |request data             |response data
 |-----:|:------------------:|:------------------------|:----------------------------
-|     0|read upcoming events|username,days            |timestamp,
+|     0|read upcoming events|days                     |timestamp,
 |      |                    |                         |name,timestamp,name,etc.
-|     1|read to-do list     |username                 |name,done (true/false),
+|     1|read to-do list     |                         |name,done (true/false),
 |      |                    |                         |repeat,etc.
-|     2|modify to-do itom   |username,index,done      |no data
-|     3|add to-do item      |username,index,name      |no data
-|     4|remove to-do item   |username,index           |no data
-|     5|add event           |username,timestamp,name  |no data
-|     6|remove event        |username,timestamp,name  |no data
-|     7|trigger notification|username,name            |no data
-|     8|recieve notification|device name              |list of timestamp(as string),
+|     2|modify to-do item   |index,done               |no data
+|     3|add to-do item      |index,name               |no data
+|     4|remove to-do item   |index                    |no data
+|     5|add event           |timestamp,name           |no data
+|     6|remove event        |timestamp,name           |no data
+|     7|trigger notification|name                     |no data
+|     8|recieve notification|                         |list of timestamp(as string),
 |      |                    |                         |name
-|     9|read all events     |username                 |timestamp,name,repeat,etc
+|     9|read all events     |                         |timestamp,name,repeat,etc
