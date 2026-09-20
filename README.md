@@ -67,10 +67,10 @@ What follows is a list of types of requests:
 |number|     explanation         |request data               |response data
 |-----:|:-----------------------:|:--------------------------|:-------------
 |     0|read file                |name(alphanumeric ascii)   |file data
-|     1|read section of file     |name,start(str),up to(str) |section data
+|     1|read section of file     |name,start(str),size(str)  |section data
 |     2|get file size            |name                       |size(str)
 |     3|write entire file        |name,data(rest of rq lines)|none
-|     4|write preexisting section|name,start,up to(str),data |none
+|     4|write preexisting section|name,start,data            |none
 |     5|append to file           |name,data                  |none
 |     6|delete file end          |name,amount                |none
 |     7|delete file              |name                       |none
