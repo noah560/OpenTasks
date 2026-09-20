@@ -61,27 +61,35 @@ Requests are structured like this:
  - remaining: data
 
 What follows is a list of types of requests:
- - Note: Data written with commas describes
- a newline-separated list.
- - Note: The server discards notifications
- once they both have been read and are at least
- 1 day old.
- -  Note: Notifications are marked as important
- by having "[IMPORTANT] " (including the space)
- at the start
+ - Note: Data written with commas in the request
+ data describes a newline-separated list.
 
-|number|     explanation    |request data             |response data
-|-----:|:------------------:|:------------------------|:----------------------------
-|     0|read upcoming events|days                     |timestamp,
-|      |                    |                         |name,timestamp,name,etc.
-|     1|read to-do list     |                         |name,done (true/false),
-|      |                    |                         |repeat,etc.
-|     2|modify to-do item   |index,done               |no data
-|     3|add to-do item      |index,name               |no data
-|     4|remove to-do item   |index                    |no data
-|     5|add event           |timestamp,name           |no data
-|     6|remove event        |timestamp,name           |no data
-|     7|trigger notification|name                     |no data
-|     8|recieve notification|                         |list of timestamp(as string),
-|      |                    |                         |name
-|     9|read all events     |                         |timestamp,name,repeat,etc
+|number|     explanation         |request data               |response data
+|-----:|:-----------------------:|:--------------------------|:-------------
+|     0|read file                |name(alphanumeric ascii)   |file data
+|     1|read section of file     |name,start(str),up to(str) |section data
+|     2|get file size            |name                       |size(str)
+|     3|write entire file        |name,data(rest of rq lines)|none
+|     4|write preexisting section|name,start,up to(str),data |none
+|     5|append to file           |name,data                  |none
+|     6|delete file end          |name,amount                |none
+|     7|delete file              |name                       |none
+|     8|list files               |none                       |name,name,etc
+|     9|push line                |name,line                  |none
+|    10|pop line from end        |name                       |line
+|    11|pop line from start      |name                       |line
+
+# Required Files
+OpenTasks clients that fit the standard should
+use a file called "todo" for a to-do list with
+one line per item, with the first character of
+each line being " " if unchecked and "V" if
+checked.
+
+For events, a file called "events" is used with
+one line per event, with the timestamp as a string,
+followed by a comma and then the name.
+
+For notifications, a file called "notifications"
+is used, with one line per item the same as an
+event.
