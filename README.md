@@ -15,10 +15,11 @@ data consists of a little-endian 64-bit unix
 timestamp that is verified upon being recieved
 to be in the last 5 minutes (or the next 10 seconds
 just in case the clocks aren't quite right) and not
-repeated, and the username. AAD is put at the start
-of the message, with the length (16-bit network order)
-at the beginning of it. The 24-byte nonce is
-randomly chosen and is appended to the end
+repeated (or it can be repeated if the nonce or
+username is different), and the username. AAD is put
+at the start of the message, with the length (16-bit
+network order) at the beginning of it. The 24-byte
+nonce is randomly chosen and is appended to the end
 of the ciphertext (after the authentication tag).
 The order of data goes:
  - 1: AAD length (16 bit network order)
