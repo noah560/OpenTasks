@@ -9,70 +9,116 @@ DATA_DIR = "OpenTasks_data"
 
 DAY = 24*60*60
 
+def check_filename(name):
+    if not name.isalnum():
+        raise ValueError("Invalid file name!")
+    if not name.isascii():
+        raise ValueError("Invalid file name!")
+
+
 class UserHandle:
     def __init__(self, path):
         # So we can just use concatenation
         # on all OSs later
-        self.path = os.path.join(path, "")
+        self.path = os.path.join(path + "_files", "")
+        self.key_path = path + "_key"
+    def get_key(self):
+        with open(self.key_path, "rb") as f:
+            d = f.read()
+        return d
     def read_file(self, name):
+        check_filename(name)
         with open(self.path + name, "rb") as f:
             d = f.read()
         return d
     def read_file_section(self, name, start, size):
+        check_filename(name)
+        if start < 0 or size < 0:
+            raise ValueError("Negative start or size!")
         with open(self.path + name, "rb") as f:
             f.seek(start, 0)
             d = f.read(size)
         return d
     def get_file_size(self, name):
+        check_filename(name)
         with open(self.path + name, "rb") as f:
             f.seek(0, 2)
             size = f.tell()
         return size
     def write_file(self, name, data):
+        check_filename(name)
         with open(self.path + name, "wb") as f:
             f.write(data)
     def write_file_section(self, name, start, data):
+        check_filename(name)
+        if start < 0:
+            raise ValueError("Start is negative!")
         with open(self.path + name, "r+b") as f:
             f.seek(start, 0)
             f.write(data)
     def append(self, name, data):
+        check_filename(name)
         with open(self.path + name, "ab") as f:
             f.write(data)
+    def delete_file_end(self, name, amount):
+        check_filename(name)
+        if amount < 0:
+            raise ValueError("Amount is negative!")
+        with open(self.path + name, "r+b") as f:
+            f.seek(0, 2)
+            if amount > f.tell():
+                raise ValueError(
+                    "Can't delete more than the file size!"
+                )
+            f.seek(-amount, 2)
+            f.truncate()
     def delete(self, name):
+        check_filename(name)
         os.remove(self.path + name)
     def list_files(self):
-        return os.listdir(self.path)
+        return "\n".join(os.listdir(self.path)).encode("utf-8")
     def push_line(self, name, data):
+        check_filename(name)
         with open(self.path + name, "r+b") as f:
-            f.seek(-1, 2)
-            if f.read(1) != b"\n":
-                f.write(b"\n")
-            f.write(data)
+            f.seek(0, 2)
+            if f.tell() == 0:
+                f.write(data)
+            else:
+                f.seek(-1, 2)
+                if f.read(1) != b"\n":
+                    f.write(b"\n")
+                f.write(data)
     def pop_ending_line(self, name):
+        check_filename(name)
         d = []
         with open(self.path + name, "rb") as f:
             for line in f:
-                d.append(f.read().strip("\r\n"))
-        if len(d[-1]) == 0:
-            d.pop()
-        data = d.pop()
-        with open(self.path + name, "wb") as f:
-            for i in d:
-                f.write(i)
-                f.write(b"\n")
+                d.append(line.strip(b"\r\n"))
+        if len(d) > 0:
+            if len(d[-1]) == 0:
+                d.pop()
+            data = d.pop()
+            with open(self.path + name, "wb") as f:
+                for i in d:
+                    f.write(i)
+                    f.write(b"\n")
+        else:
+            data = b""
         return data
     def pop_starting_line(self, name):
+        check_filename(name)
         d = []
         with open(self.path + name, "rb") as f:
             for line in f:
-                d.append(f.read().strip("\r\n"))
-        if len(d[-1]) == 0:
-            d.pop()
-        data = d.pop(0)
-        with open(self.path + name, "wb") as f:
-            for i in d:
-                f.write(i)
-                f.write(b"\n")
+                d.append(line.strip(b"\r\n"))
+        if len(d) > 0:
+            data = d.pop(0)
+            with open(self.path + name, "wb") as f:
+                for i in d:
+                    f.write(i)
+                    f.write(b"\n")
+        else:
+            data = b""
         return data
 
 
@@ -95,6 +141,7 @@ class DataManager:
 
 
 data = DataManager()
+# List of (timestamp, username, nonce)
 used_timestamps = []
 
 def clear_old_timestamps():
@@ -103,7 +150,7 @@ def clear_old_timestamps():
     now = time.time()
     for bw in range(l):
         i = l-bw-1
-        if used_timestamps[i] < now - 5 * 60 - 10:
+        if used_timestamps[i][0] < now - 5 * 60 - 10:
             del used_timestamps[i]
 
 
@@ -132,19 +179,23 @@ def process_encrypted_data(encrypted):
             return
         if timestamp < now - 5 * 60:
             return
-        if timestamp in used_timestamps:
-            return
         clear_old_timestamps()
         # Verify key
         key = data.get_user(username).get_key()
+        if len(key) != 32:
+            raise ValueError(
+                f"Incorrect key length for user {username}."
+            )
         nonce = encrypted[-24:]
+        if (timestamp, username, nonce) in used_timestamps:
+            return
         ciphertext = encrypted[(aad_size+2):(-16-24)]
         tag = encrypted[(-24-16):-24]
         cipher = ChaCha20_Poly1305.new(key=key, nonce=nonce)
         try:
             cipher.update(aad)
             plaintext = cipher.decrypt_and_verify(ciphertext, tag)
-            used_timestamps.append(timestamp)
+            used_timestamps.append((timestamp, username, nonce))
             return (username, plaintext)
         except ValueError:
             return
@@ -200,13 +251,86 @@ try:
                     break
                 request_type = int.from_bytes(request[0:1], byteorder="big")
                 try:
-                    request_body = request[1:].decode("utf-8").split("\n")
+                    request_body = request[1:]
+                    del request # Remove unneccesary memory usage
+                    # Process parameters
+                    if request_type in [0, 1, 2, 6, 7, 10, 11]:
+                        # Text data only and set number of lines
+                        request_fields = request_body.decode("utf-8").split("\n")
+                    elif request_type in [3, 5, 9]:
+                        # Name, Data (Optionally Multiline)
+                        i = request_body.index(b"\n")
+                        request_fields = [
+                            request_body[:i].decode("utf-8"),
+                            request_body[(i+1):]
+                        ]
+                    elif request_type == 4:
+                        # Name, Start, Data
+                        i = request_body.index(b"\n")
+                        j = request_body.index(b"\n", i+1)
+                        request_fields = [
+                            request_body[:i].decode("utf-8"),
+                            request_body[(i+1):j].decode("utf-8"),
+                            request_body[(j+1):]
+                        ]
+                    elif request_type == 8:
+                        # None
+                        request_fields = []
+                    else:
+                        break
                 except UnicodeDecodeError:
                     break
+                except ValueError:
+                    break
+                except IndexError:
+                    break
+                # Process request
                 response = None
                 user = data.get_user(username)
                 try:
-                    # TODO!TODO
+                    if request_type == 0:
+                        response = user.read_file(request_fields[0])
+                    elif request_type == 1:
+                        response = user.read_file_section(
+                            request_fields[0],
+                            int(request_fields[1]),
+                            int(request_fields[2])
+                        )
+                    elif request_type == 2:
+                        response = str(user.get_file_size(request_fields[0])).encode("utf-8")
+                    elif request_type == 3:
+                        user.write_file(request_fields[0], request_fields[1])
+                        response = b""
+                    elif request_type == 4:
+                        user.write_file_section(
+                            request_fields[0],
+                            int(request_fields[1]),
+                            request_fields[2]
+                        )
+                        response = b""
+                    elif request_type == 5:
+                        user.append(request_fields[0], request_fields[1])
+                        response = b""
+                    elif request_type == 6:
+                        user.delete_file_end(
+                            request_fields[0],
+                            int(request_fields[1])
+                        )
+                        response = b""
+                    elif request_type == 7:
+                        user.delete(request_fields[0])
+                        response = b""
+                    elif request_type == 8:
+                        response = user.list_files()
+                    elif request_type == 9:
+                        user.push_line(request_fields[0], request_fields[1])
+                        response = b""
+                    elif request_type == 10:
+                        response = user.pop_ending_line(request_fields[0])
+                    elif request_type == 11:
+                        response = user.pop_starting_line(request_fields[0])
+                    else:
+                        break
                     conn.sendall(len(response).to_bytes(
                         2, byteorder="big"
                     ))
