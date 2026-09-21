@@ -331,6 +331,7 @@ try:
                         response = user.pop_starting_line(request_fields[0])
                     else:
                         break
+                    response = encrypt_data(response, username)
                     conn.sendall(len(response).to_bytes(
                         2, byteorder="big"
                     ))
