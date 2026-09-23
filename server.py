@@ -126,7 +126,7 @@ class DataManager:
     def __init__(self):
         if not os.path.exists(DATA_DIR):
             os.mkdir(DATA_DIR)
-        elif not os.path.isfile(DATA_DIR):
+        elif os.path.isfile(DATA_DIR):
             raise Exception(
                 f"A file named {DATA_DIR} conflicts with the data directory!"
             )
