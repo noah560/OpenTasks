@@ -4,10 +4,17 @@ from pathlib import Path
 import socket
 from Crypto.Cipher import ChaCha20_Poly1305
 from Crypto.Random import get_random_bytes
+import traceback
 
 DATA_DIR = "OpenTasks_data"
 
 DAY = 24*60*60
+
+DEBUG = True
+
+if DEBUG:
+    print("Server running in debug mode.")
+    print("DO NOT USE DEBUG MODE IN PRODUCTION!")
 
 def check_filename(name):
     if not name.isalnum():
@@ -237,17 +244,25 @@ try:
             for _ in range(1):
                 version = int.from_bytes(recieve(conn, 1), byteorder="big")
                 if version != 1:
+                    if DEBUG:
+                        print("Protocol version isn't one!")
                     break
                 # We can now continue with the protocol
                 size = int.from_bytes(recieve(conn, 2), byteorder="big")
                 # Refuse if the request is more than 1kb long
                 if size > 1024:
+                    if DEBUG:
+                        print("Request too big!")
                     break
                 processed = process_encrypted_data(recieve(conn, size))
                 if processed is None:
+                    if DEBUG:
+                        print("Error decrypting and verifying data!")
                     break
                 username, request = processed
                 if len(request) < 1:
+                    if DEBUG:
+                        print("Request needs to be at least one byte!")
                     break
                 request_type = int.from_bytes(request[0:1], byteorder="big")
                 try:
@@ -279,10 +294,17 @@ try:
                     else:
                         break
                 except UnicodeDecodeError:
+                    if DEBUG:
+                        traceback.print_exc()
                     break
                 except ValueError:
+                    if DEBUG:
+                        traceback.print_exc()
+                        print(request_body)
                     break
                 except IndexError:
+                    if DEBUG:
+                        traceback.print_exc()
                     break
                 # Process request
                 response = None
@@ -330,14 +352,17 @@ try:
                     elif request_type == 11:
                         response = user.pop_starting_line(request_fields[0])
                     else:
+                        if DEBUG:
+                            print(f"Invalid request: {request_type}")
                         break
                     response = encrypt_data(response, username)
                     conn.sendall(len(response).to_bytes(
                         2, byteorder="big"
                     ))
                     conn.sendall(response)
-                except:
-                    pass
+                except Exception:
+                    if DEBUG:
+                        traceback.print_exc()
 finally:
     data.close()
     listener.close()
