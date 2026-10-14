@@ -2,6 +2,21 @@
 A simple tool to track events and tasks
 and send push notifications.
 
+This software is only tested on Debian Linux,
+but it _might_ work on other platforms.
+
+## Quick Start (Demo)
+To try the demo, simply run this code in bash
+(You need python and git installed):
+```bash
+git clone https://github.com/noah560/OpenTasks.git
+cd OpenTasks
+python3 -m venv venv
+. venv/bin/activate
+pip install -r requirements.txt
+python demo.py
+```
+
 ## Encryption
 OpenTasks is designed to be easy to write
 custom clients for. That way, you can make
