@@ -2,3 +2,4 @@
 venv/
 # For testing purposes
 OpenTasks_data/
+__pycache__
